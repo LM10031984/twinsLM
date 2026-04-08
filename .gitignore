@@ -9,3 +9,6 @@ archive/
 # Claude Code local artifacts
 .claude/settings.local.json
 .claude/sessions/
+
+# Supabase CLI temp state
+supabase/.temp/
