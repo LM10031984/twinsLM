@@ -940,7 +940,27 @@ serve(async (req) => {
     // Discord
     if (isRecap) {
       const briefContent = await buildBriefContent(supabase, accessToken);
-      await sendDiscord("briefs", briefContent);
+      const webhookUrl = DISCORD_WEBHOOKS.briefs;
+      let discordStatus = "not_called";
+      if (webhookUrl) {
+        try {
+          const resp = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: truncate(briefContent) }),
+          });
+          discordStatus = `${resp.status} ${resp.ok ? "ok" : await resp.text()}`;
+        } catch (e) {
+          discordStatus = `error: ${(e as Error).message}`;
+        }
+      } else {
+        discordStatus = "no_webhook_url";
+      }
+      return new Response(JSON.stringify({
+        ...results,
+        elapsed_ms: Date.now() - startTime,
+        debug: { brief_length: briefContent.length, discord_status: discordStatus },
+      }), { headers: { "Content-Type": "application/json" } });
     } else {
       // URGENT — seuil à 2
       if (urgentForDiscord.length === 1 || urgentForDiscord.length === 2) {
